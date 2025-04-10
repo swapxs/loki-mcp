@@ -58,6 +58,15 @@ func NewLokiQueryTool() mcp.Tool {
 			mcp.Description(fmt.Sprintf("Loki server URL (default: %s from %s env var)", lokiURL, EnvLokiURL)),
 			mcp.DefaultString(lokiURL),
 		),
+		mcp.WithString("username",
+			mcp.Description("Username for basic authentication"),
+		),
+		mcp.WithString("password",
+			mcp.Description("Password for basic authentication"),
+		),
+		mcp.WithString("token",
+			mcp.Description("Bearer token for authentication"),
+		),
 		mcp.WithString("start",
 			mcp.Description("Start time for the query (default: 1h ago)"),
 		),
@@ -85,6 +94,18 @@ func HandleLokiQuery(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 		if lokiURL == "" {
 			lokiURL = DefaultLokiURL
 		}
+	}
+
+	// Extract authentication parameters
+	var username, password, token string
+	if usernameArg, ok := request.Params.Arguments["username"].(string); ok {
+		username = usernameArg
+	}
+	if passwordArg, ok := request.Params.Arguments["password"].(string); ok {
+		password = passwordArg
+	}
+	if tokenArg, ok := request.Params.Arguments["token"].(string); ok {
+		token = tokenArg
 	}
 
 	// Set defaults for optional parameters
@@ -119,8 +140,8 @@ func HandleLokiQuery(ctx context.Context, request mcp.CallToolRequest) (*mcp.Cal
 		return nil, fmt.Errorf("failed to build query URL: %v", err)
 	}
 
-	// Execute query
-	result, err := executeLokiQuery(ctx, queryURL)
+	// Execute query with authentication
+	result, err := executeLokiQuery(ctx, queryURL, username, password, token)
 	if err != nil {
 		return nil, fmt.Errorf("query execution failed: %v", err)
 	}
@@ -205,11 +226,20 @@ func buildLokiQueryURL(baseURL, query string, start, end int64, limit int) (stri
 }
 
 // executeLokiQuery sends the HTTP request to Loki
-func executeLokiQuery(ctx context.Context, queryURL string) (*LokiResult, error) {
+func executeLokiQuery(ctx context.Context, queryURL string, username, password, token string) (*LokiResult, error) {
 	// Create HTTP request
 	req, err := http.NewRequestWithContext(ctx, "GET", queryURL, nil)
 	if err != nil {
 		return nil, err
+	}
+
+	// Add authentication if provided
+	if token != "" {
+		// Bearer token authentication
+		req.Header.Add("Authorization", "Bearer "+token)
+	} else if username != "" || password != "" {
+		// Basic authentication
+		req.SetBasicAuth(username, password)
 	}
 
 	// Execute request
