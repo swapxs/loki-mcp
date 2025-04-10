@@ -26,11 +26,7 @@ Or run directly with Go:
 go run ./cmd/server
 ```
 
-By default, the server runs on port 8080. You can change this by setting the PORT environment variable:
-
-```bash
-PORT=3000 go run ./cmd/server
-```
+The server communicates using stdin/stdout following the Model Context Protocol (MCP). This makes it suitable for use with Claude Desktop and other MCP-compatible clients. It does not run as an HTTP server on a port.
 
 ## Project Structure
 
