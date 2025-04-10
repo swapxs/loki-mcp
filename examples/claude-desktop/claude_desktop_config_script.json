@@ -1,13 +1,13 @@
 {
   "mcpServers": {
     "loki-mcp-server": {
-      "command": "/Users/scottlepper/code/loki-mcp-server/run-mcp-server.sh",
+      "command": "/Users/<username>/code/loki-mcp-server/run-mcp-server.sh",
       "args": [],
       "env": {
-        "HOME": "/Users/scottlepper",
-        "GOPATH": "/Users/scottlepper/go",
-        "GOMODCACHE": "/Users/scottlepper/go/pkg/mod",
-        "GOCACHE": "/Users/scottlepper/Library/Caches/go-build",
+        "HOME": "/Users/<username>",
+        "GOPATH": "/Users/<username>/go",
+        "GOMODCACHE": "/Users/<username>/go/pkg/mod",
+        "GOCACHE": "/Users/<username>/Library/Caches/go-build",
         "LOKI_URL": "http://localhost:3100"
       },
       "disabled": false,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/mark3labs/mcp-go/server"
 
-	"github.com/scottlepper/loki-mcp-server/internal/handlers"
+	"github.com/scottlepp/loki-mcp/internal/handlers"
 )
 
 const (
