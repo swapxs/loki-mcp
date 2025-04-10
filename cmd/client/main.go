@@ -47,22 +47,9 @@ type ContentItem struct {
 }
 
 func main() {
-	if len(os.Args) < 4 {
-		fmt.Println("Usage: client <operation> <x> <y>")
-		fmt.Println("Operations: add, subtract, multiply, divide")
-		fmt.Println("Example: client add 5 3")
+	if len(os.Args) < 2 {
+		showUsage()
 		os.Exit(1)
-	}
-
-	operation := os.Args[1]
-	x, err := strconv.ParseFloat(os.Args[2], 64)
-	if err != nil {
-		log.Fatalf("Invalid number for x: %v", err)
-	}
-
-	y, err := strconv.ParseFloat(os.Args[3], 64)
-	if err != nil {
-		log.Fatalf("Invalid number for y: %v", err)
 	}
 
 	// Start the MCP server in a separate process
@@ -90,22 +77,79 @@ func main() {
 	// Create a reader for the stdout
 	reader := bufio.NewReader(stdout)
 
-	// Call the calculate tool
-	fmt.Printf("Calling calculate tool with operation=%s, x=%.2f, y=%.2f\n", operation, x, y)
+	var req Request
 
-	// Create the request
-	req := Request{
-		JSONRPC: "2.0",
-		ID:      "1",
-		Method:  "tools/call",
-		Params: map[string]interface{}{
-			"name": "calculate",
-			"arguments": map[string]interface{}{
-				"operation": operation,
-				"x":         x,
-				"y":         y,
-			},
-		},
+	// Process commands
+	switch os.Args[1] {
+	case "loki_query":
+		if len(os.Args) < 3 {
+			fmt.Println("Usage: client loki_query [url] <query> [start] [end] [limit]")
+			fmt.Println("Examples:")
+			fmt.Println("  client loki_query \"{job=\\\"varlogs\\\"}\"")
+			fmt.Println("  client loki_query http://localhost:3100 \"{job=\\\"varlogs\\\"}\"")
+			fmt.Println("  client loki_query \"{job=\\\"varlogs\\\"}\" \"-1h\" \"now\" 100")
+			os.Exit(1)
+		}
+
+		var lokiURL, query, start, end string
+		var limit float64
+
+		// Check if the first argument is a URL or a query
+		if strings.HasPrefix(os.Args[2], "http") {
+			// First arg is URL, second is query
+			if len(os.Args) < 4 {
+				fmt.Println("Error: When providing a URL, you must also provide a query")
+				os.Exit(1)
+			}
+			lokiURL = os.Args[2]
+			query = os.Args[3]
+			argOffset := 4
+
+			// Optional parameters with URL
+			if len(os.Args) > argOffset {
+				start = os.Args[argOffset]
+			}
+
+			if len(os.Args) > argOffset+1 {
+				end = os.Args[argOffset+1]
+			}
+
+			if len(os.Args) > argOffset+2 {
+				limitVal, err := strconv.ParseFloat(os.Args[argOffset+2], 64)
+				if err != nil {
+					log.Fatalf("Invalid number for limit: %v", err)
+				}
+				limit = limitVal
+			}
+		} else {
+			// First arg is the query (URL comes from environment)
+			query = os.Args[2]
+			argOffset := 3
+
+			// Optional parameters without URL
+			if len(os.Args) > argOffset {
+				start = os.Args[argOffset]
+			}
+
+			if len(os.Args) > argOffset+1 {
+				end = os.Args[argOffset+1]
+			}
+
+			if len(os.Args) > argOffset+2 {
+				limitVal, err := strconv.ParseFloat(os.Args[argOffset+2], 64)
+				if err != nil {
+					log.Fatalf("Invalid number for limit: %v", err)
+				}
+				limit = limitVal
+			}
+		}
+
+		// Create the Loki query request
+		req = createLokiQueryRequest(lokiURL, query, start, end, limit)
+
+	default:
+		showUsage()
+		os.Exit(1)
 	}
 
 	// Marshal the request to JSON
@@ -151,16 +195,59 @@ func main() {
 	if result.IsError {
 		fmt.Printf("Error: %s\n", result.Content[0].Text)
 	} else {
-		// Extract the result from the text response
-		resultText := result.Content[0].Text
-		resultText = strings.TrimSpace(resultText)
-
-		fmt.Printf("Result: %s %s %s = %s\n", os.Args[2], getOperationSymbol(operation), os.Args[3], resultText)
+		// Display the result
+		for _, item := range result.Content {
+			fmt.Println(item.Text)
+		}
 	}
 
 	// Terminate the server
 	if err := cmd.Process.Kill(); err != nil {
 		log.Printf("Failed to kill server process: %v", err)
+	}
+}
+
+func showUsage() {
+	fmt.Println("Usage:")
+	fmt.Println("  client loki_query [url] <query> [start] [end] [limit]")
+	fmt.Println("    Examples:")
+	fmt.Println("      client loki_query \"{job=\\\"varlogs\\\"}\"")
+	fmt.Println("      client loki_query http://localhost:3100 \"{job=\\\"varlogs\\\"}\"")
+	fmt.Println("      client loki_query \"{job=\\\"varlogs\\\"}\" \"-1h\" \"now\" 100")
+}
+
+func createLokiQueryRequest(url, query, start, end string, limit float64) Request {
+	// Create arguments map
+	args := map[string]interface{}{
+		"query": query,
+	}
+
+	// Add URL parameter if provided, otherwise, let the server use the environment variable
+	if url != "" {
+		args["url"] = url
+	}
+
+	// Add optional parameters if provided
+	if start != "" {
+		args["start"] = start
+	}
+
+	if end != "" {
+		args["end"] = end
+	}
+
+	if limit > 0 {
+		args["limit"] = limit
+	}
+
+	return Request{
+		JSONRPC: "2.0",
+		ID:      "1",
+		Method:  "tools/call",
+		Params: map[string]interface{}{
+			"name":      "loki_query",
+			"arguments": args,
+		},
 	}
 }
 

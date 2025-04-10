@@ -1,6 +1,6 @@
 # Loki MCP Server
 
-A Go-based server implementation for the Model Context Protocol (MCP).
+A Go-based server implementation for the Model Context Protocol (MCP) with Grafana Loki integration.
 
 ## Getting Started
 
@@ -49,29 +49,43 @@ PORT=3000 go run ./cmd/server
 
 ## MCP Server
 
-The Loki MCP Server implements the Model Context Protocol (MCP) and provides a `calculate` tool that can perform basic arithmetic operations:
+The Loki MCP Server implements the Model Context Protocol (MCP) and provides the following tools:
 
-- add: Addition (x + y)
-- subtract: Subtraction (x - y)
-- multiply: Multiplication (x * y)
-- divide: Division (x / y)
+### Loki Query Tool
+
+The `loki_query` tool allows you to query Grafana Loki log data:
+
+- Required parameters:
+  - `query`: LogQL query string
+
+- Optional parameters:
+  - `url`: The Loki server URL (default: from LOKI_URL environment variable or http://localhost:3100)
+  - `start`: Start time for the query (default: 1h ago)
+  - `end`: End time for the query (default: now)
+  - `limit`: Maximum number of entries to return (default: 100)
+
+#### Environment Variables
+
+The Loki query tool supports the following environment variables:
+
+- `LOKI_URL`: Default Loki server URL to use if not specified in the request
 
 ### Testing the MCP Server
 
 You can test the MCP server using the provided client:
 
 ```bash
-# Run the client with default values (add 5 3)
-make run-client
+# Build the client
+go build -o loki-mcp-client ./cmd/client
 
-# Or run the client with custom values
-go run ./cmd/client <operation> <x> <y>
+# Loki query examples:
+./loki-mcp-client loki_query "{job=\"varlogs\"}"
+./loki-mcp-client loki_query "http://localhost:3100" "{job=\"varlogs\"}"
+./loki-mcp-client loki_query "{job=\"varlogs\"}" "-1h" "now" 100
 
-# Examples:
-go run ./cmd/client add 10 5
-go run ./cmd/client subtract 10 5
-go run ./cmd/client multiply 10 5
-go run ./cmd/client divide 10 5
+# Using environment variable:
+export LOKI_URL="http://localhost:3100"
+./loki-mcp-client loki_query "{job=\"varlogs\"}"
 ```
 
 ## Docker Support
@@ -93,9 +107,51 @@ Alternatively, you can use Docker Compose:
 docker-compose up --build
 ```
 
+### Local Testing with Loki
+
+The project includes a complete Docker Compose setup to test Loki queries locally:
+
+1. Start the Docker Compose environment:
+   ```bash
+   docker-compose up -d
+   ```
+
+   This will start:
+   - A Loki server on port 3100
+   - A Grafana instance on port 3000 (pre-configured with Loki as a data source)
+   - A log generator container that sends sample logs to Loki
+   - The Loki MCP server
+
+2. Use the provided test script to query logs:
+   ```bash
+   # Make it executable
+   chmod +x test-loki-query.sh
+   
+   # Run with default parameters (queries last 15 minutes of logs)
+   ./test-loki-query.sh
+   
+   # Query for error logs
+   ./test-loki-query.sh '{job="varlogs"} |= "ERROR"'
+   
+   # Specify a custom time range and limit
+   ./test-loki-query.sh '{job="varlogs"}' '-1h' 'now' 50
+   ```
+
+3. Access the Grafana UI at http://localhost:3000 to explore logs visually.
+
+## Architecture
+
+The Loki MCP Server uses a modular architecture:
+
+- **Server**: The main MCP server implementation in `cmd/server/main.go`
+- **Client**: A test client in `cmd/client/main.go` for interacting with the MCP server
+- **Handlers**: Individual tool handlers in `internal/handlers/`
+  - `calculator.go`: Basic arithmetic operations
+  - `loki.go`: Grafana Loki query functionality
+
 ## Using with Claude Desktop
 
-You can use this MCP server with Claude Desktop to add a calculator tool to Claude. Follow these steps:
+You can use this MCP server with Claude Desktop to add calculator and Loki query tools. Follow these steps:
 
 ### Option 1: Using the Compiled Binary
 
@@ -154,12 +210,14 @@ Or create your own configuration:
 ```json
 {
   "mcpServers": {
-    "calculator": {
+    "lokiserver": {
       "command": "path/to/loki-mcp-server",
       "args": [],
-      "env": {},
+      "env": {
+        "LOKI_URL": "http://localhost:3100"
+      },
       "disabled": false,
-      "autoApprove": ["calculate"]
+      "autoApprove": ["loki_query"]
     }
   }
 }
@@ -169,10 +227,11 @@ Make sure to replace `path/to/loki-mcp-server` with the absolute path to the bui
 
 4. Restart Claude Desktop.
 
-5. You can now use the calculator tool in Claude by asking it to perform calculations:
-   - "Calculate 5 + 3"
-   - "What is 10 * 7?"
-   - "Divide 20 by 4"
+5. You can now use the tools in Claude:
+   - Loki query examples:
+     - "Query Loki for logs with the query {job=\"varlogs\"}"
+     - "Find error logs from the last hour in Loki using query {job=\"varlogs\"} |= \"ERROR\""
+     - "Show me the most recent 50 logs from Loki with job=varlogs"
 
 ## License
 
