@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "calculator": {
+      "command": "go",
+      "args": ["run", "/path/to/loki-mcp-server/cmd/server/main.go"],
+      "env": {},
+      "disabled": false,
+      "autoApprove": ["calculate"]
+    }
+  }
+}

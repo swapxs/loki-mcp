@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "calculator": {
+      "command": "/Users/scottlepper/code/loki-mcp-server/run-mcp-server.sh",
+      "args": [],
+      "env": {
+        "HOME": "/Users/scottlepper",
+        "GOPATH": "/Users/scottlepper/go",
+        "GOMODCACHE": "/Users/scottlepper/go/pkg/mod",
+        "GOCACHE": "/Users/scottlepper/Library/Caches/go-build"
+      },
+      "disabled": false,
+      "autoApprove": ["calculate"]
+    }
+  }
+}

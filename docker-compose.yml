@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  loki-mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: loki-mcp-server:latest
+    container_name: loki-mcp-server
+    # We don't need to expose ports since we're using stdin/stdout for MCP
+    # ports:
+    #   - "8080:8080"
+    # If you need to pass environment variables
+    # environment:
+    #   - PORT=8080
