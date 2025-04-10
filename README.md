@@ -36,7 +36,7 @@ The server communicates using stdin/stdout following the Model Context Protocol 
 │   ├── server/       # MCP server implementation
 │   └── client/       # Client for testing the MCP server
 ├── internal/
-│   ├── handlers/     # HTTP handlers
+│   ├── handlers/     # Tool handlers
 │   └── models/       # Data models
 ├── pkg/
 │   └── utils/        # Utility functions and shared code
