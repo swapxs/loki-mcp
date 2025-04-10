@@ -133,7 +133,25 @@ The project includes a complete Docker Compose setup to test Loki queries locall
    ./test-loki-query.sh '{job="varlogs"}' '-1h' 'now' 50
    ```
 
-3. Access the Grafana UI at http://localhost:3000 to explore logs visually.
+3. Insert dummy logs for testing:
+   ```bash
+   # Make it executable
+   chmod +x insert-loki-logs.sh
+   
+   # Insert 10 dummy logs with default settings
+   ./insert-loki-logs.sh
+   
+   # Insert 20 logs with custom job and app name
+   ./insert-loki-logs.sh --num 20 --job "custom-job" --app "my-app"
+   
+   # Insert logs with custom environment and interval
+   ./insert-loki-logs.sh --env "production" --interval 0.5
+   
+   # Show help message
+   ./insert-loki-logs.sh --help
+   ```
+
+4. Access the Grafana UI at http://localhost:3000 to explore logs visually.
 
 ## Architecture
 
