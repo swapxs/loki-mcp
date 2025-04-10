@@ -229,6 +229,25 @@ Make sure to replace `path/to/loki-mcp-server` with the absolute path to the bui
      - "Find error logs from the last hour in Loki using query {job=\"varlogs\"} |= \"ERROR\""
      - "Show me the most recent 50 logs from Loki with job=varlogs"
 
+## Using with Cursor
+
+You can also integrate the Loki MCP server with the Cursor editor. To do this, add the following configuration to your Cursor settings:
+
+Docker configuration:
+
+```json
+{
+  "mcpServers": {
+    "loki-mcp-server": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "-e", "LOKI_URL=http://host.docker.internal:3100", "loki-mcp-server:latest"]
+    }
+  }
+}
+```
+
+After adding this configuration, restart Cursor, and you'll be able to use the Loki query tool directly within the editor.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
