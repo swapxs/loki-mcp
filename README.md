@@ -142,12 +142,11 @@ The Loki MCP Server uses a modular architecture:
 - **Server**: The main MCP server implementation in `cmd/server/main.go`
 - **Client**: A test client in `cmd/client/main.go` for interacting with the MCP server
 - **Handlers**: Individual tool handlers in `internal/handlers/`
-  - `calculator.go`: Basic arithmetic operations
   - `loki.go`: Grafana Loki query functionality
 
 ## Using with Claude Desktop
 
-You can use this MCP server with Claude Desktop to add calculator and Loki query tools. Follow these steps:
+You can use this MCP server with Claude Desktop to add Loki query tools. Follow these steps:
 
 ### Option 1: Using the Compiled Binary
 
