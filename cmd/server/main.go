@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/mark3labs/mcp-go/server"
 
@@ -11,9 +10,6 @@ import (
 
 const (
 	version = "0.1.0"
-	// Default timeout values
-	defaultReadTimeout  = 15 * time.Second
-	defaultWriteTimeout = 15 * time.Second
 )
 
 func main() {
